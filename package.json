@@ -1,5 +1,5 @@
 {
-  "name": "service-10-udagram-app",
+  "name": "udagram-app",
   "version": "1.0.0",
   "description": "Serverless aws-nodejs-typescript template",
   "main": "handler.ts",
