@@ -17,6 +17,7 @@ provider:
     CONNECTIONS_TABLE: Connections-${self:provider.stage}
     IMAGES_S3_BUCKET: serverless-maria-images-${self:provider.stage}
     THUMBNAILS_S3_BUCKET: serverless-maria-thumbnail-${self:provider.stage}
+    AUTH_0_SECRET: FF7FEDXAYKhVSeUUQoeKZfIhPcBXpGkM6hDpnjg-YDcvv2menDYyoJNTNfLs_IpS
     SIGNED_URL_EXPIRATION: 300
 
   iamRoleStatements:
@@ -56,7 +57,7 @@ custom:
 functions:
 
   Auth:
-    handler: src/lambda/auth/auth0Authorizer.ts
+    handler: src/lambda/auth/auth0Authorizer.handler
 
   GetGroups:
     handler: src/lambda/http/getGroups.handler
