@@ -16,9 +16,10 @@ provider:
     IMAGE_ID_INDEX: ImageIdIndex
     CONNECTIONS_TABLE: Connections-${self:provider.stage}
     IMAGES_S3_BUCKET: serverless-maria-images-${self:provider.stage}
-    THUMBNAILS_S3_BUCKET: serverless-maria-thumbnail-${self:provider.stage}
-    AUTH_0_SECRET: FF7FEDXAYKhVSeUUQoeKZfIhPcBXpGkM6hDpnjg-YDcvv2menDYyoJNTNfLs_IpS
     SIGNED_URL_EXPIRATION: 300
+    THUMBNAILS_S3_BUCKET: serverless-maria-thumbnail-${self:provider.stage}
+    AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
+    AUTH_0_SECRET_FIELD: auth0Secret
 
   iamRoleStatements:
     - Effect: Allow
@@ -51,6 +52,14 @@ provider:
         - dynamodb:PutItem
         - dynamodb:DeleteItem
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}
+    - Effect: Allow
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: !Ref Auth0Secret
+    - Effect: Allow
+      Action:
+        - kms:Decrypt
+      Resource: !GetAtt KMSKey.Arn
 custom:
   topicName: imagesTopic-${self:provider.stage}
 
@@ -285,4 +294,38 @@ resources:
       Properties:
         DisplayName: Image bucket topic
         TopicName: ${self:custom.topicName}
+
+    KMSKey:
+      Type: AWS::KMS::Key
+      Properties:
+        Description: KMS key to encrypt Auth0 secret
+        KeyPolicy:
+          Version: '2012-10-17'
+          Id: key-default-1
+          Statement:
+            - Sid: Allow administration of the key
+              Effect: Allow
+              Principal:
+                AWS:
+                  Fn::Join:
+                  - ':'
+                  - - 'arn:aws:iam:'
+                    - Ref: AWS::AccountId
+                    - 'root'
+              Action:
+                - 'kms:*'
+              Resource: '*'
+
+    KMSKeyAlias:
+      Type: AWS::KMS::Alias
+      Properties:
+        AliasName: alias/auth0Key-${self:provider.stage}
+        TargetKeyId: !Ref KMSKey
+
+    Auth0Secret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: ${self:provider.environment.AUTH_0_SECRET_ID}
+        Description: Auth0 secret
+        KmsKeyId: !Ref KMSKey
 
